@@ -1,0 +1,76 @@
+{
+  "id": "ec33d579-1ae9-4b65-8185-9645a866ead4",
+  "prevId": "ccce127b-9342-417a-b608-47190c87f5e4",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.processed_tweets": {
+      "name": "processed_tweets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "tweet_url": {
+          "name": "tweet_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "tweet_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.tweet_category": {
+      "name": "tweet_category",
+      "schema": "public",
+      "values": [
+        "tech",
+        "life_advice",
+        "marketing_advice",
+        "better_engineer",
+        "resources",
+        "productivity",
+        "finance",
+        "wisdom",
+        "perspective",
+        "health",
+        "food"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
