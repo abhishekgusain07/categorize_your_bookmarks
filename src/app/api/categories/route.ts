@@ -51,7 +51,8 @@ async function ensureTablesExist() {
         id TEXT PRIMARY KEY,
         processed_at TIMESTAMP DEFAULT NOW(),
         tweet_url TEXT,
-        category TEXT
+        category TEXT,
+        tweet_text TEXT
       );
     `);
     console.log("Ensured processed_tweets table exists");
