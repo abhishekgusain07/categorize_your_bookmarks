@@ -7,6 +7,7 @@ import axios from 'axios';
 import { db } from '@/db/drizzle';
 import { processedTweets, tweetCategoryEnum } from '@/db/schema';
 import { count, eq, sql } from 'drizzle-orm';
+import { API_URL } from '../../../../lib/constant';
 
 // Add this to your code before any other database operations
 async function ensureTablesExist() {
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
                 // Send tweet for auto-categorization in the background
                 try {
                   // Use relative URL for API endpoint
-                  fetch('/api/processTweet', {
+                  fetch(`${API_URL}/api/processTweet`, {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
