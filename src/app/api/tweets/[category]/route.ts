@@ -11,7 +11,8 @@ async function ensureTablesExist() {
         id TEXT PRIMARY KEY,
         processed_at TIMESTAMP DEFAULT NOW(),
         tweet_url TEXT,
-        category TEXT
+        category TEXT,
+        tweet_text TEXT
       );
     `);
     console.log("Ensured processed_tweets table exists");
@@ -50,6 +51,7 @@ export async function GET(
         id: processedTweets.id,
         tweet_url: processedTweets.tweet_url,
         processedAt: processedTweets.processedAt,
+        tweet_text: processedTweets.tweet_text,
       })
       .from(processedTweets)
       .where(eq(processedTweets.category, validCategory))
