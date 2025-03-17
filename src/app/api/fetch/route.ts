@@ -125,7 +125,8 @@ export async function GET(request: NextRequest) {
                 
                 // Send tweet for auto-categorization in the background
                 try {
-                  fetch('http:localhost:3000/api/processTweet', {
+                  // Use relative URL for API endpoint
+                  fetch('/api/processTweet', {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
@@ -173,6 +174,7 @@ export async function GET(request: NextRequest) {
     
     // Add valid categories to the response for the frontend
     return NextResponse.json({
+      tweets: filteredTweets,
       newTweetsCount: filteredTweets.length,
       validCategories: tweetCategoryEnum.enumValues,
       categoryCounts: categoryCounts,
