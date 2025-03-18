@@ -2,13 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { API_URL } from '../../../lib/constant';
 
 export default function FetchPage() {
   const [isFetching, setIsFetching] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [fetchStatus, setFetchStatus] = useState<null | 'success' | 'error'>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [fetchedCount, setFetchedCount] = useState(0);
+  const [newTweetsData, setNewTweetsData] = useState<{
+    hasNewTweets: boolean;
+    estimatedNewTweets: number;
+    totalProcessed: number;
+  } | null>(null);
+
+  // Check for new tweets on page load
+  useEffect(() => {
+    checkForNewTweets();
+  }, []);
 
   // Reset status after 3 seconds
   useEffect(() => {
@@ -16,19 +26,56 @@ export default function FetchPage() {
       const timer = setTimeout(() => {
         setFetchStatus(null);
         setStatusMessage('');
+        // Check for new tweets again after fetching
+        checkForNewTweets();
       }, 3000);
       return () => clearTimeout(timer);
     }
   }, [fetchStatus]);
 
+  // Function to check for new tweets
+  const checkForNewTweets = async (force = false) => {
+    try {
+      setIsChecking(true);
+      const response = await fetch(`/api/checkNewTweets${force ? '?force=true' : ''}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setNewTweetsData({
+          hasNewTweets: data.hasNewTweets,
+          estimatedNewTweets: data.estimatedNewTweets,
+          totalProcessed: data.totalProcessed
+        });
+      } else {
+        console.error('Failed to check for new tweets');
+        // If we can't check, assume there are new tweets
+        setNewTweetsData({
+          hasNewTweets: true,
+          estimatedNewTweets: 0,
+          totalProcessed: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error checking for new tweets:', error);
+      // If we can't check, assume there are new tweets
+      setNewTweetsData({
+        hasNewTweets: true,
+        estimatedNewTweets: 0,
+        totalProcessed: 0
+      });
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
   const handleFetch = async () => {
-    if (isFetching) return;
+    if (isFetching || !newTweetsData?.hasNewTweets) return;
     
     setIsFetching(true);
     setFetchStatus(null);
     
     try {
-      const response = await fetch(`/api/fetch`, {
+      const response = await fetch('/api/fetch', {
         method: 'POST',
       });
       
@@ -51,26 +98,65 @@ export default function FetchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <header className="mb-12 text-center">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600 mb-3">
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 mb-3">
             Fetch Tweets
           </h1>
-          <p className="text-gray-400">
+          <p className="text-gray-500">
             Click the button below to fetch new tweets and process them
           </p>
+          {newTweetsData && (
+            <div className="mt-4 text-sm">
+              <p className="text-gray-400">
+                Total processed: <span className="text-white font-semibold">{newTweetsData.totalProcessed}</span> tweets
+              </p>
+            </div>
+          )}
         </header>
         
         <div className="relative flex flex-col items-center">
+          {/* New tweet status message */}
+          <AnimatePresence>
+            {!isChecking && newTweetsData && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mb-6 px-6 py-3 rounded-lg text-center ${
+                  newTweetsData.hasNewTweets
+                    ? 'bg-emerald-950/40 text-emerald-400'
+                    : 'bg-amber-950/40 text-amber-400'
+                }`}
+              >
+                {newTweetsData.hasNewTweets ? (
+                  <div className="flex flex-col">
+                    <p>
+                      Found approximately <span className="font-bold">{newTweetsData.estimatedNewTweets}</span> new tweets to process!
+                    </p>
+                    <button 
+                      onClick={() => checkForNewTweets(true)} 
+                      className="text-xs text-fuchsia-400 hover:text-fuchsia-300 mt-1"
+                      disabled={isChecking}
+                    >
+                      Refresh count
+                    </button>
+                  </div>
+                ) : (
+                  <p>No new tweets found to process.</p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
           {/* Main pulsating button */}
           <div className="relative mb-12">
             {/* Outer pulse effect */}
             <AnimatePresence>
-              {!isFetching && (
+              {!isFetching && newTweetsData?.hasNewTweets && (
                 <>
                   <motion.div
-                    className="absolute rounded-full bg-blue-500/10"
+                    className="absolute rounded-full bg-fuchsia-500/5"
                     initial={{ width: '100%', height: '100%', opacity: 0 }}
                     animate={{ 
                       width: '150%', 
@@ -87,7 +173,7 @@ export default function FetchPage() {
                     style={{ top: 0, left: 0 }}
                   />
                   <motion.div
-                    className="absolute rounded-full bg-blue-500/10"
+                    className="absolute rounded-full bg-fuchsia-500/5"
                     initial={{ width: '100%', height: '100%', opacity: 0 }}
                     animate={{ 
                       width: '130%', 
@@ -111,14 +197,27 @@ export default function FetchPage() {
             {/* Main button */}
             <motion.button
               onClick={handleFetch}
-              disabled={isFetching}
-              className="relative z-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-600 to-purple-700 text-white font-bold text-lg shadow-lg flex items-center justify-center cursor-pointer overflow-hidden"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              disabled={isFetching || isChecking || !newTweetsData?.hasNewTweets}
+              className={`relative z-10 w-40 h-40 rounded-full text-white font-bold text-lg shadow-lg flex items-center justify-center cursor-pointer overflow-hidden ${
+                newTweetsData?.hasNewTweets && !isChecking
+                  ? 'bg-gradient-to-br from-fuchsia-700 to-fuchsia-900 hover:from-fuchsia-600 hover:to-fuchsia-800'
+                  : 'bg-gradient-to-br from-gray-800 to-gray-900 cursor-not-allowed'
+              }`}
+              whileHover={newTweetsData?.hasNewTweets ? { scale: 1.05 } : {}}
+              whileTap={newTweetsData?.hasNewTweets ? { scale: 0.95 } : {}}
             >
-              <div className="absolute inset-0 bg-black/10 backdrop-blur-sm" />
+              <div className="absolute inset-0 bg-black/20" />
               
-              {isFetching ? (
+              {isChecking ? (
+                <div className="relative flex flex-col items-center">
+                  <motion.div 
+                    className="w-10 h-10 border-4 border-white border-t-transparent rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                  />
+                  <p className="mt-2 text-sm opacity-80">Checking...</p>
+                </div>
+              ) : isFetching ? (
                 <div className="relative flex flex-col items-center">
                   <motion.div 
                     className="w-10 h-10 border-4 border-white border-t-transparent rounded-full"
@@ -127,7 +226,7 @@ export default function FetchPage() {
                   />
                   <p className="mt-2 text-sm opacity-80">Fetching...</p>
                 </div>
-              ) : (
+              ) : newTweetsData?.hasNewTweets ? (
                 <div className="relative z-10 flex flex-col items-center">
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
@@ -139,11 +238,23 @@ export default function FetchPage() {
                   </svg>
                   <span>Fetch</span>
                 </div>
+              ) : (
+                <div className="relative z-10 flex flex-col items-center">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    viewBox="0 0 24 24" 
+                    fill="currentColor" 
+                    className="w-10 h-10 mb-2 opacity-60"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                  </svg>
+                  <span className="opacity-70">No Tweets</span>
+                </div>
               )}
             </motion.button>
           </div>
           
-          {/* Status message */}
+          {/* Fetch Status message */}
           <AnimatePresence>
             {fetchStatus && (
               <motion.div
@@ -152,8 +263,8 @@ export default function FetchPage() {
                 exit={{ opacity: 0, y: 20 }}
                 className={`mb-8 px-6 py-3 rounded-lg text-center ${
                   fetchStatus === 'success' 
-                    ? 'bg-green-500/20 text-green-300' 
-                    : 'bg-red-500/20 text-red-300'
+                    ? 'bg-emerald-950/40 text-emerald-400' 
+                    : 'bg-rose-950/40 text-rose-400'
                 }`}
               >
                 <p>{statusMessage}</p>
@@ -166,10 +277,30 @@ export default function FetchPage() {
             )}
           </AnimatePresence>
           
+          {/* Refresh button */}
+          {!isChecking && !newTweetsData?.hasNewTweets && (
+            <motion.button
+              onClick={() => checkForNewTweets(true)}
+              className="mb-8 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition-colors text-white flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                fill="currentColor" 
+                className="w-5 h-5 text-fuchsia-400"
+              >
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+              </svg>
+              Check for new tweets
+            </motion.button>
+          )}
+          
           {/* Back to dashboard link */}
           <motion.a
             href="/stock"
-            className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-2"
+            className="text-gray-400 hover:text-white transition-colors flex items-center gap-2"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >

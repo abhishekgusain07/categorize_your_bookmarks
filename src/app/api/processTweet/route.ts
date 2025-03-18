@@ -170,7 +170,7 @@ Your response must be ONLY the category name, nothing else. For example: "progra
     const { text: generatedText } = await generateText({
       model: google('gemini-1.5-flash'), // Using a standard model
       prompt: prompt,
-      maxTokens: 10, // We only need a short response
+      maxTokens: 10, // We only need a shorta  response
       temperature: 0.1, // Lower temperature for more deterministic results
     });
     
