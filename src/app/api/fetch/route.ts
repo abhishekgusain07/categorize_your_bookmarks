@@ -196,6 +196,13 @@ export async function POST(request: NextRequest) {
     
     const rettiwt = new Rettiwt({ apiKey: process.env.TWITTER_KEY });
 
+    // Track all processed tweet IDs and their categories
+    type ProcessedTweetInfo = {
+      id: string;
+      category: string;
+    };
+    const processedTweetInfo: ProcessedTweetInfo[] = [];
+
     const fetchTodaysTweets = async () => {
       const allTweets = [];
       let cursor;
@@ -250,7 +257,7 @@ export async function POST(request: NextRequest) {
                 // Send tweet for auto-categorization in the background
                 try {
                   // Use relative URL for API endpoint
-                  fetch(`${API_URL}/api/processTweet`, {
+                  const response = await fetch(`${API_URL}/api/processTweet`, {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
@@ -262,8 +269,17 @@ export async function POST(request: NextRequest) {
                       auto_categorize: true
                     }),
                   });
-                  // We're not awaiting this request to keep the fetching process fast
-                  // Errors will be handled in the processTweet endpoint
+                  
+                  // Track category information for the newly processed tweet
+                  if (response.ok) {
+                    const data = await response.json();
+                    if (data.category) {
+                      processedTweetInfo.push({
+                        id: tweet.id,
+                        category: data.category
+                      });
+                    }
+                  }
                 } catch (processingError) {
                   console.error('Error sending tweet for processing:', processingError);
                 }
@@ -296,12 +312,28 @@ export async function POST(request: NextRequest) {
     // Get total count of processed tweets
     const totalProcessed = Object.values(categoryCounts).reduce((sum, count) => sum + (count || 0), 0);
     
+    // Extract unique categories from processed tweets for redirect info
+    const processedCategories = [...new Set(processedTweetInfo.map(info => info.category))];
+    
+    // Count tweets by category
+    const categoryDistribution: Record<string, number> = processedTweetInfo.reduce((acc: Record<string, number>, { category }) => {
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {});
+    
+    // Sort categories by count (most tweets first)
+    const sortedCategories = Object.entries(categoryDistribution)
+      .sort(([, countA], [, countB]) => (countB as number) - (countA as number))
+      .map(([category]) => category);
+    
     // Return a simplified response for the POST endpoint
     return NextResponse.json({
       count: filteredTweets.length,
       message: filteredTweets.length > 0 
         ? `${filteredTweets.length} new tweets fetched and processed!` 
         : 'No new tweets to process.',
+      categories: sortedCategories,
+      categoryDistribution,
       status: "success"
     });
   } catch (error) {

@@ -85,6 +85,28 @@ export default function FetchPage() {
         setFetchStatus('success');
         setStatusMessage(data.message || 'Tweets fetched successfully!');
         setFetchedCount(data.count || 0);
+        
+        // Store the fetch timestamp and count in localStorage for highlighting
+        const fetchInfo = {
+          timestamp: new Date().toISOString(),
+          count: data.count || 0,
+          categories: data.categories || []
+        };
+        localStorage.setItem('lastFetch', JSON.stringify(fetchInfo));
+        
+        // Redirect to stock page after showing success message
+        setTimeout(() => {
+          // If we have category info, redirect to that specific category
+          if (data.categories && data.categories.length > 0) {
+            // Use the most frequent category if multiple were processed
+            const categoryToRedirectTo = data.categories[0];
+            // Ensure category is properly encoded in the URL
+            const encodedCategory = encodeURIComponent(categoryToRedirectTo);
+            window.location.href = `/stock?highlight=new&category=${encodedCategory}`;
+          } else {
+            window.location.href = '/stock?highlight=new';
+          }
+        }, 1500); // Wait 1.5s to show the success message before redirecting
       } else {
         setFetchStatus('error');
         setStatusMessage(data.error || 'Failed to fetch tweets');

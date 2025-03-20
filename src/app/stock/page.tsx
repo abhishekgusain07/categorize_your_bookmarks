@@ -31,6 +31,91 @@ export default function StockPage() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [newlyFetchedTweets, setNewlyFetchedTweets] = useState<{
+    timestamp: string;
+    ids: Set<string>;
+  }>({ timestamp: '', ids: new Set() });
+  
+  // Helper function to find a valid category that matches the requested one
+  const findMatchingCategory = (requestedCategory: string, validCategories: string[] = []): string | null => {
+    if (!requestedCategory) return null;
+    
+    // First try exact match
+    const exactMatch = validCategories.find(cat => cat === requestedCategory);
+    if (exactMatch) return exactMatch;
+    
+    // Then try case-insensitive match
+    const lowerRequested = requestedCategory.toLowerCase();
+    const caseInsensitiveMatch = validCategories.find(cat => cat.toLowerCase() === lowerRequested);
+    if (caseInsensitiveMatch) return caseInsensitiveMatch;
+    
+    // Finally try matching with underscores replaced by spaces and vice versa
+    const withSpaces = requestedCategory.replace(/_/g, ' ').toLowerCase();
+    const withUnderscores = requestedCategory.replace(/\s+/g, '_').toLowerCase();
+    
+    const spaceMatch = validCategories.find(cat => 
+      cat.replace(/_/g, ' ').toLowerCase() === withSpaces);
+    if (spaceMatch) return spaceMatch;
+    
+    const underscoreMatch = validCategories.find(cat => 
+      cat.replace(/\s+/g, '_').toLowerCase() === withUnderscores);
+    if (underscoreMatch) return underscoreMatch;
+    
+    return null;
+  };
+  
+  // Safe setter for category that ensures we use a valid category
+  const setCategory = (category: string | null) => {
+    if (!category) {
+      setSelectedCategory(null);
+      return;
+    }
+    
+    if (categoryData?.validCategories) {
+      const matchedCategory = findMatchingCategory(category, categoryData.validCategories);
+      console.log(`Setting category: requested=${category}, matched=${matchedCategory}`);
+      setSelectedCategory(matchedCategory);
+    } else {
+      // Store the requested category to be resolved once we load valid categories
+      console.log(`Storing category request for later: ${category}`);
+      setSelectedCategory(category);
+    }
+  };
+
+  // Parse query parameters to highlight new tweets and select category
+  useEffect(() => {
+    // Only run on client-side
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const highlight = params.get('highlight');
+      const categoryParam = params.get('category');
+      
+      console.log('URL parameters:', { highlight, categoryParam });
+      
+      // If highlight=new is present, we should highlight new tweets
+      if (highlight === 'new') {
+        // Get the last fetch info from localStorage
+        const lastFetchStr = localStorage.getItem('lastFetch');
+        if (lastFetchStr) {
+          try {
+            const lastFetch = JSON.parse(lastFetchStr);
+            // Will mark these as newly fetched with the timestamp
+            setNewlyFetchedTweets({
+              timestamp: lastFetch.timestamp,
+              ids: new Set() // We'll populate this when we fetch the tweets
+            });
+          } catch (e) {
+            console.error('Error parsing lastFetch data:', e);
+          }
+        }
+      }
+      
+      // If we have a category from the URL, select it regardless of highlight
+      if (categoryParam && categoryParam.length > 0) {
+        setCategory(categoryParam);
+      }
+    }
+  }, []);
 
   // Fetch category data
   useEffect(() => {
@@ -41,11 +126,23 @@ export default function StockPage() {
         const data = await response.json();
         setCategoryData(data);
         
-        // Select the category with the most tweets by default
+        // Only re-evaluate category if we have valid categories
         if (data.validCategories && data.validCategories.length > 0) {
-          const mostPopularCategory = Object.entries(data.categoryCounts)
-            .sort(([, countA], [, countB]) => (countB as number) - (countA as number))[0][0];
-          setSelectedCategory(mostPopularCategory);
+          // Re-evaluate the selected category with the loaded valid categories
+          if (selectedCategory) {
+            // Only need to re-match if we have a possibly unmatched category
+            const shouldReMatch = !data.validCategories.includes(selectedCategory);
+            if (shouldReMatch) {
+              setCategory(selectedCategory);
+            }
+          } 
+          // Select default if no category is selected
+          else {
+            // Select the category with the most tweets by default
+            const mostPopularCategory = Object.entries(data.categoryCounts)
+              .sort(([, countA], [, countB]) => (countB as number) - (countA as number))[0][0];
+            setCategory(mostPopularCategory);
+          }
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -55,7 +152,7 @@ export default function StockPage() {
     };
 
     fetchCategories();
-  }, [refreshing]);
+  }, [refreshing, selectedCategory]);
 
   // Fetch tweets for selected category
   useEffect(() => {
@@ -66,7 +163,27 @@ export default function StockPage() {
         setLoading(true);
         const response = await fetch(`/api/tweets/${selectedCategory}`);
         const data = await response.json();
-        setTweets(data.tweets || []);
+        const fetchedTweets = data.tweets || [];
+        setTweets(fetchedTweets);
+        
+        // If we're highlighting new tweets, identify them by comparing timestamps
+        if (newlyFetchedTweets.timestamp) {
+          const lastFetchTime = new Date(newlyFetchedTweets.timestamp);
+          // Find tweets processed around or after the last fetch time
+          // Allow a small buffer (5 seconds before) to account for timing differences
+          const bufferTime = new Date(lastFetchTime.getTime() - 5000);
+          
+          const newIds = new Set<string>(
+            fetchedTweets
+              .filter((tweet: Tweet) => new Date(tweet.processedAt) >= bufferTime)
+              .map((tweet: Tweet) => tweet.id)
+          );
+          
+          setNewlyFetchedTweets(prev => ({ 
+            timestamp: prev.timestamp, 
+            ids: newIds 
+          }));
+        }
       } catch (error) {
         console.error(`Error fetching tweets for ${selectedCategory}:`, error);
       } finally {
@@ -75,7 +192,30 @@ export default function StockPage() {
     };
 
     fetchTweets();
-  }, [selectedCategory]);
+  }, [selectedCategory, newlyFetchedTweets.timestamp]);
+
+  // Clear highlight after a delay
+  useEffect(() => {
+    if (newlyFetchedTweets.ids.size > 0) {
+      // Remove the highlighting after some time
+      const timer = setTimeout(() => {
+        // Clear the URL parameter without refreshing the page
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('highlight');
+          url.searchParams.delete('category');
+          window.history.replaceState({}, '', url.toString());
+        }
+        
+        // Clear the highlight state after 10 seconds
+        setTimeout(() => {
+          setNewlyFetchedTweets({ timestamp: '', ids: new Set() });
+        }, 10000);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [newlyFetchedTweets.ids]);
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -115,6 +255,12 @@ export default function StockPage() {
       (tweet.tweet_text && tweet.tweet_text.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }, [tweets, searchQuery]);
+
+  // Update the mobile menu button click handler to use setCategory
+  const handleCategoryClick = (category: string) => {
+    setCategory(category);
+    setIsMobileMenuOpen(false);
+  };
 
   // Loading state
   if (loading && !categoryData) {
@@ -183,12 +329,9 @@ export default function StockPage() {
                 <motion.button
                   key={category}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setSelectedCategory(category);
-                    setIsMobileMenuOpen(false);
-                  }}
+                  onClick={() => handleCategoryClick(category)}
                   className={`text-left px-3 py-2 rounded-lg flex justify-between items-center transition-colors ${
-                    selectedCategory === category
+                    selectedCategory && selectedCategory.toLowerCase() === category.toLowerCase()
                       ? 'bg-fuchsia-900/60 text-white border border-fuchsia-800'
                       : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
                   }`}
@@ -215,9 +358,9 @@ export default function StockPage() {
                   key={category}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => handleCategoryClick(category)}
                   className={`w-full text-left px-4 py-3 rounded-lg flex justify-between items-center transition-colors ${
-                    selectedCategory === category
+                    selectedCategory && selectedCategory.toLowerCase() === category.toLowerCase()
                       ? 'bg-fuchsia-900/60 text-white border border-fuchsia-800'
                       : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
                   }`}
@@ -276,36 +419,81 @@ export default function StockPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredTweets.map((tweet, index) => (
-                    <motion.div
-                      key={tweet.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:bg-gray-750 transition-colors"
-                    >
-                      <div className="flex flex-col md:flex-row justify-between items-start gap-2">
-                        <div className="flex-1">
-                          {tweet.tweet_text && (
-                            <p className="text-white mb-2 line-clamp-3">
-                              {tweet.tweet_text}
-                            </p>
-                          )}
-                          <a
-                            href={tweet.tweet_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-fuchsia-400 hover:text-fuchsia-300 transition-colors break-all"
+                  {filteredTweets.map((tweet, index) => {
+                    const isNewlyFetched = newlyFetchedTweets.ids.has(tweet.id);
+                    
+                    return (
+                      <motion.div
+                        key={tweet.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ 
+                          opacity: 1, 
+                          y: 0,
+                          scale: isNewlyFetched ? [1, 1.03, 1] : 1,
+                          boxShadow: isNewlyFetched 
+                            ? ['0 0 0 rgba(217, 70, 239, 0)', '0 0 20px rgba(217, 70, 239, 0.5)', '0 0 10px rgba(217, 70, 239, 0.2)'] 
+                            : 'none'
+                        }}
+                        transition={{ 
+                          delay: index * 0.05,
+                          scale: {
+                            repeat: isNewlyFetched ? 2 : 0,
+                            duration: 1.5,
+                          },
+                          boxShadow: {
+                            repeat: isNewlyFetched ? 2 : 0,
+                            duration: 1.5,
+                          }
+                        }}
+                        className={`bg-gray-800 border ${
+                          isNewlyFetched
+                            ? 'border-fuchsia-500/70'
+                            : 'border-gray-700'
+                        } rounded-lg p-4 hover:bg-gray-750 transition-colors relative overflow-hidden`}
+                      >
+                        {isNewlyFetched && (
+                          <motion.div
+                            className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-fuchsia-500 to-emerald-500"
+                            initial={{ scaleX: 0, transformOrigin: "left" }}
+                            animate={{ scaleX: 1 }}
+                            transition={{ duration: 0.6, delay: index * 0.05 + 0.2 }}
+                          />
+                        )}
+                        
+                        {isNewlyFetched && (
+                          <motion.div
+                            className="absolute -right-1 -top-1 bg-fuchsia-500 text-white text-xs px-2 py-1 rounded-bl-md rounded-tr-md font-semibold shadow-lg"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.05 + 0.3 }}
                           >
-                            {tweet.tweet_url}
-                          </a>
+                            NEW
+                          </motion.div>
+                        )}
+                        
+                        <div className="flex flex-col md:flex-row justify-between items-start gap-2">
+                          <div className="flex-1">
+                            {tweet.tweet_text && (
+                              <p className="text-white mb-2 line-clamp-3">
+                                {tweet.tweet_text}
+                              </p>
+                            )}
+                            <a
+                              href={tweet.tweet_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-fuchsia-400 hover:text-fuchsia-300 transition-colors break-all"
+                            >
+                              {tweet.tweet_url}
+                            </a>
+                          </div>
+                          <span className="text-gray-400 text-sm md:ml-4 md:whitespace-nowrap">
+                            {formatDate(tweet.processedAt)}
+                          </span>
                         </div>
-                        <span className="text-gray-400 text-sm md:ml-4 md:whitespace-nowrap">
-                          {formatDate(tweet.processedAt)}
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </div>
