@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import ThemeToggle from '@/components/ThemeToggle';
 
 // Define types
 type CategoryCount = {
@@ -265,52 +266,54 @@ export default function StockPage() {
   // Loading state
   if (loading && !categoryData) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-fuchsia-500"></div>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-8">
         <header className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
             <Link href="/">
-              <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+              <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
                 Tweet Stock
               </h1>
               </Link>
-              <p className="text-gray-500 mt-2">
+              <p className="text-muted-foreground mt-2">
                 {categoryData?.totalProcessed || 0} tweets organized in {categoryData?.validCategories?.length || 0} categories
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
+              <ThemeToggle />
+              
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden px-4 py-2 rounded-lg bg-gray-900 border border-gray-800 hover:bg-gray-800 transition-colors"
+                className="md:hidden px-4 py-2 rounded-lg bg-card-background border border-card-border hover:bg-card-hover transition-colors"
               >
                 {isMobileMenuOpen ? 'Hide Categories' : 'Show Categories'}
               </button>
               <Link
                 href="/fetch"
-                className="px-4 py-2 rounded-lg bg-gray-900 border border-gray-800 hover:bg-gray-800 transition-colors text-white flex items-center gap-2"
+                className="px-4 py-2 rounded-lg bg-card-background border border-card-border hover:bg-card-hover transition-colors text-foreground flex items-center gap-2"
               >
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
                   viewBox="0 0 24 24" 
                   fill="currentColor" 
-                  className="w-5 h-5 text-fuchsia-400"
+                  className="w-5 h-5 text-primary"
                 >
-                  <path d="M11.9997 2C6.47976 2 2.00049 6.48 2.00049 12C2.00049 17.52 6.47976 22 11.9997 22C17.5197 22 21.9997 17.52 21.9997 12C21.9997 6.48 17.5197 2 11.9997 2ZM18.9197 8H15.9697C15.6497 6.75 15.1997 5.55 14.6297 4.44C16.4397 5.07 17.9197 6.35 18.9197 8ZM11.9997 4.04C12.8297 5.24 13.4797 6.57 13.9097 8H10.0897C10.5197 6.57 11.1697 5.24 11.9997 4.04ZM4.25976 14C4.09976 13.36 3.99976 12.69 3.99976 12C3.99976 11.31 4.09976 10.64 4.25976 10H7.63976C7.55976 10.66 7.49976 11.32 7.49976 12C7.49976 12.68 7.55976 13.34 7.63976 14H4.25976ZM5.07976 16H8.02976C8.34976 17.25 8.79976 18.45 9.36976 19.56C7.55976 18.93 6.07976 17.66 5.07976 16ZM8.02976 8H5.07976C6.07976 6.34 7.55976 5.07 9.36976 4.44C8.79976 5.55 8.34976 6.75 8.02976 8ZM11.9997 19.96C11.1697 18.76 10.5197 17.43 10.0897 16H13.9097C13.4797 17.43 12.8297 18.76 11.9997 19.96ZM14.3397 14H9.65976C9.55976 13.34 9.49976 12.68 9.49976 12C9.49976 11.32 9.55976 10.65 9.65976 10H14.3397C14.4397 10.65 14.4997 11.32 14.4997 12C14.4997 12.68 14.4397 13.34 14.3397 14ZM14.6297 19.56C15.1997 18.45 15.6497 17.25 15.9697 16H18.9197C17.9197 17.65 16.4397 18.93 14.6297 19.56ZM16.3597 14C16.4397 13.34 16.4997 12.68 16.4997 12C16.4997 11.32 16.4397 10.66 16.3597 10H19.7397C19.8997 10.64 19.9997 11.31 19.9997 12C19.9997 12.69 19.8997 13.36 19.7397 14H16.3597Z" />
+                  <path d="M11.9997 2C6.47976 2 2.00049 6.48 2.00049 12C2.00049 17.52 6.47976 22 11.9997 22C17.5197 22 21.9997 17.52 21.9997 12C21.9997 6.48 17.5197 2 11.9997 2ZM18.9197 8H15.9697C15.6497 6.75 15.1997 5.55 14.6297 4.44C16.4397 5.07 17.9197 6.35 18.9197 8ZM11.9997 4.04C12.8297 5.24 13.4797 6.57 13.9097 8H10.0897C10.5197 6.57 11.1697 5.24 11.9997 4.04Z" />
                 </svg>
                 <span>Fetch New Tweets</span>
               </Link>
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className={`px-4 py-2 rounded-lg bg-gray-900 border border-gray-800 hover:bg-gray-800 transition-colors text-white ${
+                className={`px-4 py-2 rounded-lg bg-card-background border border-card-border hover:bg-card-hover transition-colors text-foreground ${
                   refreshing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
@@ -322,7 +325,7 @@ export default function StockPage() {
 
         {/* Mobile category menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden mb-6 bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <div className="md:hidden mb-6 bg-card-background border border-card-border rounded-xl p-4">
             <h2 className="text-xl font-semibold mb-4">Categories</h2>
             <div className="grid grid-cols-2 gap-2">
               {categoryData?.validCategories?.map((category) => (
@@ -332,14 +335,14 @@ export default function StockPage() {
                   onClick={() => handleCategoryClick(category)}
                   className={`text-left px-3 py-2 rounded-lg flex justify-between items-center transition-colors ${
                     selectedCategory && selectedCategory.toLowerCase() === category.toLowerCase()
-                      ? 'bg-fuchsia-900/60 text-white border border-fuchsia-800'
-                      : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
+                      ? 'bg-primary/60 text-foreground border border-primary/80'
+                      : 'bg-card-hover hover:bg-card-hover/70 text-muted-foreground border border-card-border'
                   }`}
                 >
                   <span className="capitalize text-sm">
                     {category.replace(/_/g, ' ')}
                   </span>
-                  <span className="bg-black/40 text-gray-300 px-2 py-0.5 rounded-full text-xs">
+                  <span className="bg-background/40 text-muted-foreground px-2 py-0.5 rounded-full text-xs">
                     {categoryData?.categoryCounts[category] || 0}
                   </span>
                 </motion.button>
@@ -350,7 +353,7 @@ export default function StockPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Category sidebar - desktop */}
-          <div className="hidden md:block lg:col-span-1 bg-gray-900 border border-gray-800 rounded-xl p-4 h-fit sticky top-4">
+          <div className="hidden md:block lg:col-span-1 bg-card-background border border-card-border rounded-xl p-4 h-fit sticky top-4">
             <h2 className="text-xl font-semibold mb-4">Categories</h2>
             <div className="space-y-2">
               {categoryData?.validCategories?.map((category) => (
@@ -361,14 +364,14 @@ export default function StockPage() {
                   onClick={() => handleCategoryClick(category)}
                   className={`w-full text-left px-4 py-3 rounded-lg flex justify-between items-center transition-colors ${
                     selectedCategory && selectedCategory.toLowerCase() === category.toLowerCase()
-                      ? 'bg-fuchsia-900/60 text-white border border-fuchsia-800'
-                      : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
+                      ? 'bg-primary/60 text-foreground border border-primary/80'
+                      : 'bg-card-hover hover:bg-card-hover/70 text-muted-foreground border border-card-border'
                   }`}
                 >
                   <span className="capitalize">
                     {category.replace(/_/g, ' ')}
                   </span>
-                  <span className="bg-black/40 text-gray-300 px-2 py-1 rounded-full text-xs">
+                  <span className="bg-background/40 text-muted-foreground px-2 py-1 rounded-full text-xs">
                     {categoryData?.categoryCounts[category] || 0}
                   </span>
                 </motion.button>
@@ -378,11 +381,11 @@ export default function StockPage() {
 
           {/* Tweet list */}
           <div className="lg:col-span-3">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <div className="bg-card-background border border-card-border rounded-xl p-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <h2 className="text-2xl font-semibold capitalize flex items-center">
                   {selectedCategory?.replace(/_/g, ' ') || 'Select a category'}
-                  <span className="ml-3 bg-fuchsia-900/60 border border-fuchsia-800 text-white px-2 py-1 rounded-full text-xs">
+                  <span className="ml-3 bg-primary/60 border border-primary/80 text-foreground px-2 py-1 rounded-full text-xs">
                     {filteredTweets.length} tweets
                   </span>
                 </h2>
@@ -394,12 +397,12 @@ export default function StockPage() {
                     placeholder="Search tweets..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                    className="w-full bg-card-hover border border-card-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       ✕
                     </button>
@@ -409,10 +412,10 @@ export default function StockPage() {
 
               {loading ? (
                 <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-fuchsia-500"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                 </div>
               ) : filteredTweets.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
+                <div className="text-center py-12 text-muted-foreground">
                   {searchQuery 
                     ? 'No tweets match your search query' 
                     : 'No tweets found in this category'}
@@ -445,15 +448,15 @@ export default function StockPage() {
                             duration: 1.5,
                           }
                         }}
-                        className={`bg-gray-800 border ${
+                        className={`bg-card-hover border ${
                           isNewlyFetched
-                            ? 'border-fuchsia-500/70'
-                            : 'border-gray-700'
-                        } rounded-lg p-4 hover:bg-gray-750 transition-colors relative overflow-hidden`}
+                            ? 'border-primary/70'
+                            : 'border-card-border'
+                        } rounded-lg p-4 hover:bg-card-hover/80 transition-colors relative overflow-hidden`}
                       >
                         {isNewlyFetched && (
                           <motion.div
-                            className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-fuchsia-500 to-emerald-500"
+                            className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary"
                             initial={{ scaleX: 0, transformOrigin: "left" }}
                             animate={{ scaleX: 1 }}
                             transition={{ duration: 0.6, delay: index * 0.05 + 0.2 }}
@@ -462,7 +465,7 @@ export default function StockPage() {
                         
                         {isNewlyFetched && (
                           <motion.div
-                            className="absolute -right-1 -top-1 bg-fuchsia-500 text-white text-xs px-2 py-1 rounded-bl-md rounded-tr-md font-semibold shadow-lg"
+                            className="absolute -right-1 -top-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-bl-md rounded-tr-md font-semibold shadow-lg"
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.05 + 0.3 }}
@@ -474,7 +477,7 @@ export default function StockPage() {
                         <div className="flex flex-col md:flex-row justify-between items-start gap-2">
                           <div className="flex-1">
                             {tweet.tweet_text && (
-                              <p className="text-white mb-2 line-clamp-3">
+                              <p className="text-foreground mb-2 line-clamp-3">
                                 {tweet.tweet_text}
                               </p>
                             )}
@@ -482,12 +485,12 @@ export default function StockPage() {
                               href={tweet.tweet_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-fuchsia-400 hover:text-fuchsia-300 transition-colors break-all"
+                              className="text-primary hover:text-primary/80 transition-colors break-all"
                             >
                               {tweet.tweet_url}
                             </a>
                           </div>
-                          <span className="text-gray-400 text-sm md:ml-4 md:whitespace-nowrap">
+                          <span className="text-muted-foreground text-sm md:ml-4 md:whitespace-nowrap">
                             {formatDate(tweet.processedAt)}
                           </span>
                         </div>

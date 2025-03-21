@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function FetchPage() {
   const [isFetching, setIsFetching] = useState(false);
@@ -122,7 +124,7 @@ export default function FetchPage() {
   // Loading state
   if (isChecking && !newTweetsData) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <motion.div 
           className="flex flex-col items-center"
           initial={{ opacity: 0 }}
@@ -132,7 +134,7 @@ export default function FetchPage() {
           <div className="relative w-20 h-20">
             {/* Animated rings */}
             <motion.div 
-              className="absolute inset-0 rounded-full border-2 border-fuchsia-500/30"
+              className="absolute inset-0 rounded-full border-2 border-primary/30"
               animate={{ 
                 rotate: 360,
                 scale: [1, 1.05, 1],
@@ -144,7 +146,7 @@ export default function FetchPage() {
             />
             
             <motion.div 
-              className="absolute inset-3 rounded-full border-2 border-emerald-500/20"
+              className="absolute inset-3 rounded-full border-2 border-secondary/20"
               animate={{ 
                 rotate: -360,
                 scale: [1.05, 1, 1.05],
@@ -159,7 +161,7 @@ export default function FetchPage() {
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute h-1.5 w-1.5 rounded-full bg-fuchsia-400"
+                className="absolute h-1.5 w-1.5 rounded-full bg-primary"
                 initial={{ 
                   x: 0, 
                   y: 0,
@@ -188,7 +190,7 @@ export default function FetchPage() {
             
             {/* Pulsating center */}
             <motion.div
-              className="absolute rounded-full bg-gradient-to-br from-fuchsia-600 to-fuchsia-900"
+              className="absolute rounded-full bg-gradient-to-br from-primary to-primary/60"
               animate={{ 
                 scale: [1, 1.2, 1],
                 opacity: [0.7, 0.9, 0.7],
@@ -209,7 +211,7 @@ export default function FetchPage() {
             {/* Logo */}
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
-                className="text-white"
+                className="text-foreground"
                 animate={{ 
                   scale: [0.8, 1, 0.8],
                   rotate: [0, 10, 0, -10, 0],
@@ -236,12 +238,12 @@ export default function FetchPage() {
             animate={{ opacity: [0.7, 1, 0.7] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            <p className="text-white font-medium">Loading</p>
+            <p className="text-foreground font-medium">Loading</p>
             <div className="flex items-center justify-center mt-1 space-x-1">
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-fuchsia-400"
+                  className="w-1.5 h-1.5 rounded-full bg-primary"
                   animate={{ opacity: [0.3, 1, 0.3] }}
                   transition={{
                     duration: 1.5,
@@ -258,176 +260,86 @@ export default function FetchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <header className="mb-12 text-center">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 mb-3">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background gradient effect */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background to-background/80 pointer-events-none" />
+      
+      <div className="w-full max-w-lg relative">
+        <header className="mb-16 text-center relative">
+          <div className="absolute -right-2 -top-2">
+            <ThemeToggle />
+          </div>
+          <motion.h1 
+            className="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary via-foreground to-primary"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
             Fetch Tweets
-          </h1>
-          <p className="text-gray-500">
+          </motion.h1>
+          <motion.p 
+            className="text-muted-foreground text-lg"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
             Click the button below to fetch new tweets and process them
-          </p>
+          </motion.p>
           {newTweetsData && (
-            <div className="mt-4 text-sm">
-              <p className="text-gray-400">
-                Total processed: <span className="text-white font-semibold">{newTweetsData.totalProcessed}</span> tweets
+            <motion.div 
+              className="mt-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <p className="text-muted-foreground text-base">
+                Total processed: <span className="text-primary font-semibold">{newTweetsData.totalProcessed}</span> tweets
               </p>
-            </div>
+            </motion.div>
           )}
         </header>
         
         <div className="relative flex flex-col items-center">
-          {/* Loading state at the top of the page */}
-          {!newTweetsData && isChecking && (
-            <motion.div 
-              className="mb-8 flex flex-col items-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div className="flex justify-center items-center">
-                <div className="relative">
-                  {/* Multiple rotating gradient rings */}
-                  {[...Array(3)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className={`absolute rounded-full border-2 border-t-transparent border-b-transparent ${
-                        i === 0 ? 'border-l-fuchsia-500 border-r-emerald-500' :
-                        i === 1 ? 'border-l-emerald-500 border-r-fuchsia-500' :
-                        'border-l-fuchsia-300 border-r-emerald-300'
-                      }`}
-                      style={{
-                        width: `${70 - i * 16}px`,
-                        height: `${70 - i * 16}px`,
-                        top: `${i * 8}px`,
-                        left: `${i * 8}px`,
-                      }}
-                      animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-                      transition={{ 
-                        duration: 3 + i, 
-                        repeat: Infinity, 
-                        ease: "linear" 
-                      }}
-                    />
-                  ))}
-                  
-                  {/* Pulsating center */}
-                  <motion.div
-                    className="absolute rounded-full bg-black"
-                    style={{
-                      width: '30px',
-                      height: '30px',
-                      top: '20px',
-                      left: '20px',
-                    }}
-                    animate={{ 
-                      boxShadow: [
-                        '0 0 0 0px rgba(212, 60, 255, 0.2)',
-                        '0 0 0 10px rgba(212, 60, 255, 0)',
-                      ],
-                    }}
-                    transition={{ 
-                      duration: 1.5, 
-                      repeat: Infinity, 
-                      ease: "easeOut" 
-                    }}
-                  />
-                  
-                  {/* Center icon */}
-                  <motion.div
-                    className="absolute flex items-center justify-center"
-                    style={{
-                      width: '30px',
-                      height: '30px',
-                      top: '20px',
-                      left: '20px',
-                    }}
-                    animate={{ scale: [0.8, 1, 0.8] }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity, 
-                      ease: "easeInOut" 
-                    }}
-                  >
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 24 24" 
-                      fill="currentColor" 
-                      className="w-5 h-5 text-white"
-                    >
-                      <path d="M12 6v6l4 2-1 2-5-3V6z M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/>
-                    </svg>
-                  </motion.div>
-                </div>
-              </div>
-              
-              <motion.div 
-                className="mt-3 flex items-center space-x-1 text-gray-400 text-sm"
-                animate={{ opacity: [0.7, 1, 0.7] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                <p>Initializing</p>
-                <motion.div 
-                  className="flex space-x-0.5"
-                >
-                  {[0, 1, 2].map((i) => (
-                    <motion.div
-                      key={i}
-                      className="w-1 h-1 rounded-full bg-fuchsia-400"
-                      initial={{ opacity: 0.3 }}
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        delay: i * 0.2,
-                      }}
-                    />
-                  ))}
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          )}
-          
           {/* New tweet status message */}
           <AnimatePresence>
             {!isChecking && newTweetsData && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`mb-6 px-6 py-3 rounded-lg text-center ${
+                className={`mb-8 px-8 py-4 rounded-2xl text-center shadow-lg backdrop-blur-sm ${
                   newTweetsData.hasNewTweets
-                    ? 'bg-emerald-950/40 text-emerald-400'
-                    : 'bg-amber-950/40 text-amber-400'
+                    ? 'bg-emerald-500/10 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
+                    : 'bg-amber-500/10 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-500/20'
                 }`}
               >
                 {newTweetsData.hasNewTweets ? (
                   <div className="flex flex-col">
-                    <p>
+                    <p className="text-lg font-medium">
                       Found approximately <span className="font-bold">{newTweetsData.estimatedNewTweets}</span> new tweets to process!
                     </p>
                     <button 
                       onClick={() => checkForNewTweets(true)} 
-                      className="text-xs text-fuchsia-400 hover:text-fuchsia-300 mt-1"
+                      className="text-sm text-primary hover:text-primary/80 transition-colors mt-2 font-medium"
                       disabled={isChecking}
                     >
                       Refresh count
                     </button>
                   </div>
                 ) : (
-                  <p>No new tweets found to process.</p>
+                  <p className="text-lg font-medium">No new tweets found to process.</p>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
           
-          {/* Main pulsating button */}
-          <div className="relative mb-12">
+          {/* Main button container */}
+          <div className="relative mb-16">
             {/* Outer pulse effect */}
             <AnimatePresence>
               {!isFetching && newTweetsData?.hasNewTweets && (
                 <>
                   <motion.div
-                    className="absolute rounded-full bg-fuchsia-500/5"
+                    className="absolute rounded-full bg-primary/10 dark:bg-primary/5"
                     initial={{ width: '100%', height: '100%', opacity: 0 }}
                     animate={{ 
                       width: '150%', 
@@ -444,7 +356,7 @@ export default function FetchPage() {
                     style={{ top: 0, left: 0 }}
                   />
                   <motion.div
-                    className="absolute rounded-full bg-fuchsia-500/5"
+                    className="absolute rounded-full bg-primary/15 dark:bg-primary/5"
                     initial={{ width: '100%', height: '100%', opacity: 0 }}
                     animate={{ 
                       width: '130%', 
@@ -469,26 +381,26 @@ export default function FetchPage() {
             <motion.button
               onClick={handleFetch}
               disabled={isFetching || isChecking || !newTweetsData?.hasNewTweets}
-              className={`relative z-10 w-40 h-40 rounded-full text-white font-bold text-lg shadow-lg flex items-center justify-center cursor-pointer overflow-hidden ${
+              className={`relative z-10 w-48 h-48 rounded-full text-foreground font-bold text-lg shadow-lg flex items-center justify-center cursor-pointer overflow-hidden transition-transform ${
                 newTweetsData?.hasNewTweets && !isChecking
-                  ? 'bg-gradient-to-br from-fuchsia-700 to-fuchsia-900 hover:from-fuchsia-600 hover:to-fuchsia-800'
-                  : 'bg-gradient-to-br from-gray-800 to-gray-900 cursor-not-allowed'
+                  ? 'bg-gradient-to-br from-primary via-primary/90 to-primary/70 hover:from-primary hover:via-primary hover:to-primary/80 shadow-primary/20'
+                  : 'bg-gradient-to-br from-muted/90 via-muted to-muted/70 dark:from-muted-foreground/30 dark:via-muted-foreground/20 dark:to-muted-foreground/10'
               }`}
               whileHover={newTweetsData?.hasNewTweets ? { scale: 1.05 } : {}}
               whileTap={newTweetsData?.hasNewTweets ? { scale: 0.95 } : {}}
             >
-              <div className="absolute inset-0 bg-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent dark:from-white/5" />
               
               {isChecking ? (
                 <div className="relative flex flex-col items-center">
-                  <div className="relative w-12 h-12">
+                  <div className="relative w-14 h-14">
                     <motion.div 
-                      className="absolute inset-0 rounded-full border-2 border-fuchsia-500/20"
+                      className="absolute inset-0 rounded-full border-2 border-primary/20"
                       animate={{ scale: [1, 1.2, 1] }}
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                     />
                     <motion.div 
-                      className="absolute inset-0 rounded-full border-2 border-fuchsia-400/40"
+                      className="absolute inset-0 rounded-full border-2 border-primary/40"
                       animate={{ scale: [1.2, 1, 1.2] }}
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                     />
@@ -498,14 +410,14 @@ export default function FetchPage() {
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                     >
-                      <div className="h-3 w-3 rounded-full bg-white absolute -top-1.5 left-1/2 transform -translate-x-1/2"></div>
+                      <div className="h-3 w-3 rounded-full bg-foreground absolute -top-1.5 left-1/2 transform -translate-x-1/2"></div>
                     </motion.div>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: [0.5, 1, 0.5] }}
                         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                        className="w-7 h-7 text-white"
+                        className="w-8 h-8 text-foreground"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
@@ -514,7 +426,7 @@ export default function FetchPage() {
                     </div>
                   </div>
                   <motion.p 
-                    className="mt-3 text-sm text-gray-300"
+                    className="mt-4 text-base font-medium"
                     animate={{ opacity: [0.5, 1, 0.5] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
@@ -526,23 +438,34 @@ export default function FetchPage() {
                   <div className="relative w-16 h-16">
                     {/* Orbital rings */}
                     <motion.div 
-                      className="absolute inset-0 rounded-full border border-fuchsia-500/30"
+                      className="absolute inset-0 rounded-full border-2 border-primary/30"
                       animate={{ rotate: 360 }}
                       transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                     />
                     <motion.div 
-                      className="absolute inset-1 rounded-full border border-emerald-500/20"
+                      className="absolute inset-2 rounded-full border-2 border-foreground/20"
                       animate={{ rotate: -360 }}
                       transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
                     />
                     
                     {/* Animated dots orbiting */}
                     <motion.div 
-                      className="absolute h-2 w-2 rounded-full bg-fuchsia-400"
-                      animate={{ 
-                        rotate: 360
-                      }}
+                      className="absolute h-2.5 w-2.5 rounded-full bg-primary"
+                      animate={{ rotate: 360 }}
                       transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                      style={{ 
+                        top: '50%', 
+                        left: '50%', 
+                        translateX: '-50%', 
+                        translateY: '-50%',
+                        transformOrigin: '0px -32px'
+                      }}
+                    />
+                    
+                    <motion.div 
+                      className="absolute h-3 w-3 rounded-full bg-foreground"
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                       style={{ 
                         top: '50%', 
                         left: '50%', 
@@ -552,24 +475,9 @@ export default function FetchPage() {
                       }}
                     />
                     
-                    <motion.div 
-                      className="absolute h-3 w-3 rounded-full bg-emerald-400"
-                      animate={{ 
-                        rotate: -360
-                      }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                      style={{ 
-                        top: '50%', 
-                        left: '50%', 
-                        translateX: '-50%', 
-                        translateY: '-50%',
-                        transformOrigin: '0px -24px'
-                      }}
-                    />
-                    
                     {/* Central pulsating sphere */}
                     <motion.div 
-                      className="absolute rounded-full bg-gradient-to-br from-fuchsia-600 to-fuchsia-900"
+                      className="absolute rounded-full bg-gradient-to-br from-primary to-primary/60"
                       animate={{ 
                         scale: [1, 1.1, 1],
                         opacity: [0.7, 0.9, 0.7]
@@ -593,7 +501,7 @@ export default function FetchPage() {
                         initial={{ scale: 0.8 }}
                         animate={{ scale: [0.8, 1, 0.8] }}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        className="w-7 h-7 text-white"
+                        className="w-8 h-8 text-foreground"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M11.9997 2C6.47976 2 2.00049 6.48 2.00049 12C2.00049 17.52 6.47976 22 11.9997 22C17.5197 22 21.9997 17.52 21.9997 12C21.9997 6.48 17.5197 2 11.9997 2ZM18.9197 8H15.9697C15.6497 6.75 15.1997 5.55 14.6297 4.44C16.4397 5.07 17.9197 6.35 18.9197 8ZM11.9997 4.04C12.8297 5.24 13.4797 6.57 13.9097 8H10.0897C10.5197 6.57 11.1697 5.24 11.9997 4.04Z" />
@@ -602,9 +510,9 @@ export default function FetchPage() {
                     </div>
                   </div>
                   
-                  <div className="mt-3 text-center">
+                  <div className="mt-4 text-center">
                     <motion.p 
-                      className="text-sm text-gray-300"
+                      className="text-base font-medium"
                       animate={{ opacity: [0.7, 1, 0.7] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     >
@@ -612,14 +520,14 @@ export default function FetchPage() {
                     </motion.p>
                     
                     <motion.div 
-                      className="flex items-center justify-center mt-1 space-x-1"
+                      className="flex items-center justify-center mt-2 space-x-1.5"
                       initial="hidden"
                       animate="visible"
                     >
                       {[0, 1, 2].map((i) => (
                         <motion.div
                           key={i}
-                          className="w-1.5 h-1.5 rounded-full bg-fuchsia-400"
+                          className="w-2 h-2 rounded-full bg-foreground"
                           initial={{ opacity: 0.3 }}
                           animate={{ opacity: [0.3, 1, 0.3] }}
                           transition={{
@@ -639,11 +547,11 @@ export default function FetchPage() {
                     xmlns="http://www.w3.org/2000/svg" 
                     viewBox="0 0 24 24" 
                     fill="currentColor" 
-                    className="w-10 h-10 mb-2"
+                    className="w-12 h-12 mb-3"
                   >
-                    <path d="M11.9997 2C6.47976 2 2.00049 6.48 2.00049 12C2.00049 17.52 6.47976 22 11.9997 22C17.5197 22 21.9997 17.52 21.9997 12C21.9997 6.48 17.5197 2 11.9997 2ZM18.9197 8H15.9697C15.6497 6.75 15.1997 5.55 14.6297 4.44C16.4397 5.07 17.9197 6.35 18.9197 8ZM11.9997 4.04C12.8297 5.24 13.4797 6.57 13.9097 8H10.0897C10.5197 6.57 11.1697 5.24 11.9997 4.04ZM4.25976 14C4.09976 13.36 3.99976 12.69 3.99976 12C3.99976 11.31 4.09976 10.64 4.25976 10H7.63976C7.55976 10.66 7.49976 11.32 7.49976 12C7.49976 12.68 7.55976 13.34 7.63976 14H4.25976ZM5.07976 16H8.02976C8.34976 17.25 8.79976 18.45 9.36976 19.56C7.55976 18.93 6.07976 17.66 5.07976 16ZM8.02976 8H5.07976C6.07976 6.34 7.55976 5.07 9.36976 4.44C8.79976 5.55 8.34976 6.75 8.02976 8ZM11.9997 19.96C11.1697 18.76 10.5197 17.43 10.0897 16H13.9097C13.4797 17.43 12.8297 18.76 11.9997 19.96ZM14.3397 14H9.65976C9.55976 13.34 9.49976 12.68 9.49976 12C9.49976 11.32 9.55976 10.65 9.65976 10H14.3397C14.4397 10.65 14.4997 11.32 14.4997 12C14.4997 12.68 14.4397 13.34 14.3397 14ZM14.6297 19.56C15.1997 18.45 15.6497 17.25 15.9697 16H18.9197C17.9197 17.65 16.4397 18.93 14.6297 19.56ZM16.3597 14C16.4397 13.34 16.4997 12.68 16.4997 12C16.4997 11.32 16.4397 10.66 16.3597 10H19.7397C19.8997 10.64 19.9997 11.31 19.9997 12C19.9997 12.69 19.8997 13.36 19.7397 14H16.3597Z" />
+                    <path d="M11.9997 2C6.47976 2 2.00049 6.48 2.00049 12C2.00049 17.52 6.47976 22 11.9997 22C17.5197 22 21.9997 17.52 21.9997 12C21.9997 6.48 17.5197 2 11.9997 2ZM18.9197 8H15.9697C15.6497 6.75 15.1997 5.55 14.6297 4.44C16.4397 5.07 17.9197 6.35 18.9197 8ZM11.9997 4.04C12.8297 5.24 13.4797 6.57 13.9097 8H10.0897C10.5197 6.57 11.1697 5.24 11.9997 4.04Z" />
                   </svg>
-                  <span>Fetch</span>
+                  <span className="text-xl font-medium">Fetch</span>
                 </div>
               ) : (
                 <div className="relative z-10 flex flex-col items-center">
@@ -651,23 +559,29 @@ export default function FetchPage() {
                     initial={{ opacity: 0.6 }}
                     animate={{ opacity: [0.6, 0.8, 0.6] }}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="relative"
                   >
+                    <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/50 to-background/30 rounded-full blur-sm" />
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
                       viewBox="0 0 24 24" 
                       fill="currentColor" 
-                      className="w-10 h-10 mb-2 opacity-60"
+                      className="w-12 h-12 mb-3 text-muted-foreground/70 dark:text-muted-foreground relative z-10"
                     >
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                     </svg>
                   </motion.div>
-                  <motion.span 
-                    className="opacity-70"
-                    animate={{ opacity: [0.7, 0.9, 0.7] }}
+                  <motion.div 
+                    className="relative"
+                    initial={{ opacity: 0.6 }}
+                    animate={{ opacity: [0.6, 0.9, 0.6] }}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                   >
-                    No Tweets
-                  </motion.span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-background/50 to-transparent blur-md" />
+                    <span className="text-xl font-medium text-muted-foreground/90 dark:text-muted-foreground relative z-10">
+                      No Tweets
+                    </span>
+                  </motion.div>
                 </div>
               )}
             </motion.button>
@@ -680,15 +594,15 @@ export default function FetchPage() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className={`mb-8 px-6 py-3 rounded-lg text-center ${
+                className={`mb-10 px-8 py-4 rounded-2xl text-center shadow-lg backdrop-blur-sm ${
                   fetchStatus === 'success' 
-                    ? 'bg-emerald-950/40 text-emerald-400' 
-                    : 'bg-rose-950/40 text-rose-400'
+                    ? 'bg-emerald-500/10 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20' 
+                    : 'bg-rose-500/10 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-500/20'
                 }`}
               >
-                <p>{statusMessage}</p>
+                <p className="text-lg font-medium">{statusMessage}</p>
                 {fetchStatus === 'success' && fetchedCount > 0 && (
-                  <p className="text-sm mt-1">
+                  <p className="text-base mt-2">
                     {fetchedCount} {fetchedCount === 1 ? 'tweet' : 'tweets'} processed
                   </p>
                 )}
@@ -700,7 +614,7 @@ export default function FetchPage() {
           {!isChecking && !newTweetsData?.hasNewTweets && (
             <motion.button
               onClick={() => checkForNewTweets(true)}
-              className="mb-8 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition-colors text-white flex items-center gap-2"
+              className="mb-10 px-6 py-3 rounded-xl bg-muted/80 dark:bg-muted-foreground/10 border border-border hover:bg-muted dark:hover:bg-muted-foreground/20 transition-all text-foreground flex items-center gap-3 shadow-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -708,18 +622,18 @@ export default function FetchPage() {
                 xmlns="http://www.w3.org/2000/svg" 
                 viewBox="0 0 24 24" 
                 fill="currentColor" 
-                className="w-5 h-5 text-fuchsia-400"
+                className="w-5 h-5 text-primary"
               >
                 <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
               </svg>
-              Check for new tweets
+              <span className="font-medium">Check for new tweets</span>
             </motion.button>
           )}
           
           {/* Back to dashboard link */}
           <motion.a
             href="/stock"
-            className="text-gray-400 hover:text-white transition-colors flex items-center gap-2"
+            className="text-foreground hover:text-primary transition-colors flex items-center gap-3 font-medium"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >

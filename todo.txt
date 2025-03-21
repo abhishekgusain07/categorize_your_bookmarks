@@ -1,0 +1,23 @@
+# XBookmarks Project TODOs
+
+## Features
+- Need to add vector database for better tweet categorization and search
+- Fix category selection and URL parameter handling in stock page
+- Add proper error handling for failed API requests
+- Implement pagination for tweets with large counts
+
+## Improvements
+- Enhance tweet categorization accuracy 
+- Add additional filtering options for tweet lists
+- Optimize loading performance
+- Add user preferences for default views
+
+## UI/UX
+- ✅ Add dark/light theme toggle
+- Improve mobile experience
+- Add keyboard shortcuts
+
+## Technical Debt
+- Refactor API routes for better organization
+- Add comprehensive test coverage
+- Documentation for codebase and API endpoints 
