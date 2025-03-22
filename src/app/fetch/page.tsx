@@ -5,12 +5,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
+interface PreviewTweet {
+  id: string;
+  text: string;
+  author: string;
+  created_at: string;
+  url: string;
+}
+
 export default function FetchPage() {
   const [isFetching, setIsFetching] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [fetchStatus, setFetchStatus] = useState<null | 'success' | 'error'>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [fetchedCount, setFetchedCount] = useState(0);
+  const [previewTweets, setPreviewTweets] = useState<PreviewTweet[]>([]);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [newTweetsData, setNewTweetsData] = useState<{
     hasNewTweets: boolean;
     estimatedNewTweets: number;
@@ -21,6 +31,29 @@ export default function FetchPage() {
   useEffect(() => {
     checkForNewTweets();
   }, []);
+
+  // Function to load preview tweets
+  const loadPreviewTweets = async () => {
+    try {
+      setIsPreviewLoading(true);
+      const response = await fetch('/api/previewTweets');
+      if (response.ok) {
+        const data = await response.json();
+        setPreviewTweets(data.tweets);
+      }
+    } catch (error) {
+      console.error('Error loading preview tweets:', error);
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
+  // Load preview tweets when new tweets are found
+  useEffect(() => {
+    if (newTweetsData?.hasNewTweets) {
+      loadPreviewTweets();
+    }
+  }, [newTweetsData?.hasNewTweets]);
 
   // Reset status after 3 seconds
   useEffect(() => {
@@ -120,6 +153,51 @@ export default function FetchPage() {
       setIsFetching(false);
     }
   };
+
+  // Preview Tweet Card Component
+  const PreviewTweetCard = ({ tweet }: { tweet: PreviewTweet }) => (
+    <motion.a
+      href={tweet.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="block bg-background/50 dark:bg-background/30 backdrop-blur-md border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all hover:bg-background/70 dark:hover:bg-background/40 hover:border-primary/50"
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24" 
+            fill="currentColor" 
+            className="w-6 h-6 text-primary"
+          >
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-sm font-medium text-foreground">@{tweet.author}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground">
+                {new Date(tweet.created_at).toLocaleDateString()}
+              </p>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                fill="currentColor" 
+                className="w-4 h-4 text-muted-foreground"
+              >
+                <path d="M10 6V8H5V19H16V14H18V20C18 20.5523 17.5523 21 17 21H4C3.44772 21 3 20.5523 3 20V7C3 6.44772 3.44772 6 4 6H10ZM21 3V11H19L18.9999 6.413L11.2071 14.2071L9.79289 12.7929L17.5849 5H13V3H21Z"/>
+              </svg>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground transition-colors">{tweet.text}</p>
+        </div>
+      </div>
+    </motion.a>
+  );
 
   // Loading state
   if (isChecking && !newTweetsData) {
@@ -298,6 +376,47 @@ export default function FetchPage() {
             </motion.div>
           )}
         </header>
+        
+        {/* Preview Tweets Section */}
+        {newTweetsData?.hasNewTweets && (
+          <div className="w-full mb-8">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="relative"
+            >
+              <div className="absolute inset-x-0 -top-6 h-24 bg-gradient-to-b from-background via-background to-transparent" />
+              <div className="absolute inset-x-0 -bottom-6 h-24 bg-gradient-to-t from-background via-background to-transparent" />
+              
+              <div className="relative">
+                <h3 className="text-lg font-medium text-foreground mb-4 text-center">
+                  Quick Preview
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    (Latest {previewTweets.length} tweets)
+                  </span>
+                </h3>
+                
+                {isPreviewLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <motion.div
+                      className="w-8 h-8 border-2 border-primary rounded-full border-t-transparent"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
+                    <AnimatePresence>
+                      {previewTweets.map((tweet) => (
+                        <PreviewTweetCard key={tweet.id} tweet={tweet} />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
         
         <div className="relative flex flex-col items-center">
           {/* New tweet status message */}
