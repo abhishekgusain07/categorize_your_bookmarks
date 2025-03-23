@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import {  NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
 import { processedTweets, tweetCategoryEnum } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -21,17 +21,17 @@ async function ensureTablesExist() {
   }
 }
 
-// Next.js expects this exact type for dynamic route parameters
+
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { category: string } }
+  request: Request
 ) {
   try {
     // Ensure the table exists before using it
     await ensureTablesExist();
     
-    // Validate and sanitize the category from URL
-    const category = params.category;
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const category = pathParts[pathParts.length - 1]; 
     
     // Validate that the category is valid
     if (!tweetCategoryEnum.enumValues.includes(category as any)) {
