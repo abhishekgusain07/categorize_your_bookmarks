@@ -1,0 +1,10 @@
+# Ignore everything
+*
+# Except for the directories specifically we want to lint if we decide to re-enable later
+!components/
+!app/
+!pages/
+!lib/
+!utils/
+!hooks/
+!src/ 

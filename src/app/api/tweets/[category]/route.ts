@@ -21,6 +21,7 @@ async function ensureTablesExist() {
   }
 }
 
+// Next.js expects this exact type for dynamic route parameters
 export async function GET(
   request: NextRequest,
   { params }: { params: { category: string } }
@@ -29,7 +30,8 @@ export async function GET(
     // Ensure the table exists before using it
     await ensureTablesExist();
     
-    const { category } = params;
+    // Validate and sanitize the category from URL
+    const category = params.category;
     
     // Validate that the category is valid
     if (!tweetCategoryEnum.enumValues.includes(category as any)) {
@@ -65,7 +67,7 @@ export async function GET(
       status: "success"
     });
   } catch (error) {
-    console.error(`Error fetching tweets for category ${params.category}:`, error);
+    console.error("Error fetching tweets by category:", error);
     return NextResponse.json({ error: 'Failed to fetch tweets.' }, { status: 500 });
   }
 } 
