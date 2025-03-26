@@ -1,9 +1,9 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { sha256 } from 'js-sha256';
 
-
-const CORRECT_PASSWORD = process.env.NEXT_PUBLIC_SECRET_PASSWORD; 
+const PASSWORD_HASH = process.env.NEXT_PUBLIC_SECRET_HASH;
 
 interface AuthContextType {
   isUnlocked: boolean;
@@ -38,7 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const unlock = (password: string): boolean => {
-    if (password === CORRECT_PASSWORD) {
+    // Hash the input password and compare with stored hash
+    const hashedInput = sha256(password);
+    
+    if (hashedInput === PASSWORD_HASH) {
       setIsUnlocked(true);
       // Store auth state in localStorage with timestamp
       localStorage.setItem('xbookmarks-auth', JSON.stringify({
