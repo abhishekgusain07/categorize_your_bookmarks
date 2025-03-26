@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 
 const CORRECT_PASSWORD = process.env.NEXT_PUBLIC_SECRET_PASSWORD; 
-console.log(CORRECT_PASSWORD)
 
 interface AuthContextType {
   isUnlocked: boolean;
