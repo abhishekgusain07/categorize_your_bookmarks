@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { sha256 } from 'js-sha256';
 
-const PASSWORD_HASH = process.env.NEXT_PUBLIC_SECRET_HASH;
+const PASSWORD_HASH = "b4daa381b2ccdac56d3e09c31875fe953334a6d06d0a23cd2eaa7d7d8bbcab5b";
 
 interface AuthContextType {
   isUnlocked: boolean;
